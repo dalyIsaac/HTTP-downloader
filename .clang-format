@@ -13,7 +13,7 @@ BraceWrapping:
   AfterClass: true
   SplitEmptyFunction: false
   AfterControlStatement: false
-  AfterFunction: true
+  AfterFunction: false
   AfterUnion: true
   BeforeElse: false
 
