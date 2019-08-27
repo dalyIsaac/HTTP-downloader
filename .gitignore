@@ -50,3 +50,13 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+# Built executable
+downloader
+http_download
+http_test
+queue_test
+
+# Testing
+__output
+__template

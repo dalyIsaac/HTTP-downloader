@@ -1,5 +1,3 @@
-#include "http.h"
-
 #include <arpa/inet.h>
 #include <assert.h>
 #include <netdb.h>
@@ -9,7 +7,10 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
+#include "http.h"
+
 #define BUF_SIZE 1024
+#define BAD_SOCKET -1
 
 /**
  * @brief Creates and connects a socket.
@@ -22,30 +23,31 @@ int create_socket(char* host, int* port) {
     struct addrinfo hints;       // server address info
     struct addrinfo* res = NULL; // connector's address information
     int sockfd;
+    char port_str[20] = {0};
 
-    int n = snprintf((char*) port, 20, "%d", *port);
+    int n = snprintf(port_str, 20, "%d", *port);
     if (n < 0 || n >= 20) {
-        perror("Malformed port");
-        exit(EXIT_FAILURE);
+        printf("ERROR: Malformed port");
+        return BAD_SOCKET;
     }
 
     if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
-        perror("socket");
-        exit(EXIT_FAILURE);
+        printf("ERROR: socket");
+        return BAD_SOCKET;
     }
 
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_INET;
     hints.ai_socktype = SOCK_STREAM;
 
-    if (getaddrinfo(host, (char*) port, &hints, &res) != 0) {
-        perror("getaddrinfo");
-        exit(EXIT_FAILURE);
+    if (getaddrinfo(host, port_str, &hints, &res) != 0) {
+        printf("ERROR: getaddrinfo");
+        return BAD_SOCKET;
     }
 
     if (connect(sockfd, res->ai_addr, res->ai_addrlen) == -1) {
-        perror("connect");
-        exit(1);
+        printf("ERROR: connect");
+        return BAD_SOCKET;
     }
 
     return sockfd;
@@ -59,33 +61,37 @@ int create_socket(char* host, int* port) {
  * @param range - The size of the content to retrieve.
  * @return Buffer* - The socket's contents.
  */
-Buffer* read_socket(int sockfd, const char* range) {
-    int blockLen = atoi(range);
-    int bytesLen = sizeof(char) * blockLen;
-    int currentSize = bytesLen;
+Buffer* read_socket(int sockfd) {
+    int currentSize = BUF_SIZE;
+    int bytesRead = 0;
 
     Buffer* buffer = malloc(sizeof(Buffer));
-    buffer->data = malloc(bytesLen);
+    buffer->data = malloc(currentSize);
+    buffer->length = 0;
 
-    int numbytes = 0;
-
-    if ((numbytes = read(sockfd, buffer->data, bytesLen)) <= 0) {
-        perror("reading from socket");
-        exit(EXIT_FAILURE);
+    if ((bytesRead = read(sockfd, buffer->data, BUF_SIZE)) <= 0) {
+        printf("ERROR: reading from socket");
+        free(buffer->data);
+        free(buffer);
+        return NULL;
     }
+    buffer->length += bytesRead;
 
-    char* newData[blockLen];
+    char newData[BUF_SIZE] = {0};
 
-    while (numbytes > 0) {
-        if ((numbytes = read(sockfd, newData, bytesLen)) > 0) {
-            currentSize += numbytes;
+    while ((bytesRead = read(sockfd, newData, BUF_SIZE)) > 0) {
+        if (buffer->length + bytesRead >= currentSize) {
+            currentSize += BUF_SIZE;
             buffer->data = realloc(buffer->data, currentSize);
-
-            memcpy(&buffer->data[currentSize - numbytes], &newData, numbytes);
-            memset(newData, 0, numbytes);
         }
+
+        memcpy(&buffer->data[buffer->length], &newData, bytesRead);
+        buffer->length += bytesRead;
+        memset(&newData, 0, bytesRead);
     }
 
+    printf("Printing:\n");
+    printf("%s\n", buffer->data);
     return buffer;
 }
 
@@ -105,21 +111,27 @@ Buffer* read_socket(int sockfd, const char* range) {
 Buffer* http_query(char* host, char* page, const char* range, int port) {
     int sockfd = create_socket(host, &port);
 
+    if (sockfd == BAD_SOCKET) {
+        return NULL;
+    }
+
     char header[100];
     sprintf(header,
-            "GET %s\r\n"
+            "GET /%s HTTP/1.0\r\n"
             "Host: %s\r\n"
             "Range: bytes=%s\r\n"
             "User-Agent: getter\r\n\r\n",
             page, host, range);
 
     if (write(sockfd, header, strlen(header)) == -1) {
-        perror("send header");
-        exit(EXIT_FAILURE);
+        printf("ERROR: send header");
+        return NULL;
     }
 
-    Buffer* results = read_socket(sockfd, range);
-    return results;
+    Buffer* buffer = read_socket(sockfd);
+
+    close(sockfd);
+    return buffer;
 }
 
 /**

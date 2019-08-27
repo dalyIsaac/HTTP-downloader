@@ -27,11 +27,11 @@ AllowShortFunctionsOnASingleLine: None
 AllowShortIfStatementsOnASingleLine: false
 AllowShortLoopsOnASingleLine: false
 
-IncludeBlocks: Regroup
+IncludeBlocks: Preserve
 
 PointerAlignment: Left
 AlignConsecutiveAssignments: false
 AlignTrailingComments: true
 
 SpaceAfterCStyleCast: true
-CommentPragmas: '^ NO-FORMAT:'
+CommentPragmas: "^ NO-FORMAT:"
