@@ -30,6 +30,7 @@
       "program": "${workspaceFolder}/http_download",
       "args": [
         "github.com/dwyl/english-words/raw/master/words.txt",
+        // "example.com/url",
         "__output"
       ],
       "stopAtEntry": false,

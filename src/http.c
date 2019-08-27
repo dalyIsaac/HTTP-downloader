@@ -66,7 +66,7 @@ Buffer* read_socket(int sockfd) {
     int bytesRead = 0;
 
     Buffer* buffer = malloc(sizeof(Buffer));
-    buffer->data = malloc(currentSize);
+    buffer->data = calloc(currentSize, sizeof(char));
     buffer->length = 0;
 
     if ((bytesRead = read(sockfd, buffer->data, BUF_SIZE)) <= 0) {
@@ -96,6 +96,27 @@ Buffer* read_socket(int sockfd) {
 }
 
 /**
+ * @brief Creates the HTTP header.
+ *
+ * @param host
+ * @param page
+ * @param range
+ * @return char*
+ */
+char* create_header(char* host, char* page, const char* range) {
+    char* format = "GET /%s HTTP/1.0\r\n"
+                   "Host: %s\r\n"
+                   "Range: bytes=%s\r\n"
+                   "User-Agent: getter\r\n\r\n";
+    size_t length =
+        strlen(format) + strlen(host) + strlen(page) + strlen(range);
+
+    char* header = malloc(sizeof(char) * length);
+    sprintf(header, format, page, host, range);
+    return header;
+}
+
+/**
  * Perform an HTTP 1.0 query to a given host and page and port number.
  * host is a hostname and page is a path on the remote server. The query
  * will attempt to retrieve content in the given byte range.
@@ -115,13 +136,7 @@ Buffer* http_query(char* host, char* page, const char* range, int port) {
         return NULL;
     }
 
-    char header[100];
-    sprintf(header,
-            "GET /%s HTTP/1.0\r\n"
-            "Host: %s\r\n"
-            "Range: bytes=%s\r\n"
-            "User-Agent: getter\r\n\r\n",
-            page, host, range);
+    char* header = create_header(host, page, range);
 
     if (write(sockfd, header, strlen(header)) == -1) {
         printf("ERROR: send header");
@@ -130,6 +145,7 @@ Buffer* http_query(char* host, char* page, const char* range, int port) {
 
     Buffer* buffer = read_socket(sockfd);
 
+    free(header);
     close(sockfd);
     return buffer;
 }
