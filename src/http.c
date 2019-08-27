@@ -60,7 +60,6 @@ int create_socket(char* host, int* port) {
  * socket's contents.
  *
  * @param sockfd - The socket to read from.
- * @param range - The size of the content to retrieve.
  * @return Buffer* - The socket's contents.
  */
 Buffer* read_socket(int sockfd) {
