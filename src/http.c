@@ -41,6 +41,7 @@ int create_socket(char* host, int* port) {
     hints.ai_socktype = SOCK_STREAM;
 
     if (getaddrinfo(host, port_str, &hints, &res) != 0) {
+        freeaddrinfo(res);
         printf("ERROR: getaddrinfo");
         return BAD_SOCKET;
     }
@@ -50,6 +51,7 @@ int create_socket(char* host, int* port) {
         return BAD_SOCKET;
     }
 
+    freeaddrinfo(res);
     return sockfd;
 }
 
