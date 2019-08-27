@@ -90,8 +90,6 @@ Buffer* read_socket(int sockfd) {
         memset(&newData, 0, bytesRead);
     }
 
-    printf("Printing:\n");
-    printf("%s\n", buffer->data);
     return buffer;
 }
 
