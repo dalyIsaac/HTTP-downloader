@@ -11,27 +11,42 @@
 
 #define BUF_SIZE 1024
 #define BAD_SOCKET -1
+#define PORT_STR_LEN 20
+
+/**
+ * @brief Get the port as a string.
+ *
+ * @param port
+ * @return char*
+ */
+char* get_port_str(int* port) {
+    char* port_str = malloc(PORT_STR_LEN * sizeof(char));
+
+    int len = snprintf(port_str, PORT_STR_LEN, "%d", *port);
+    if (len < 0 || len >= PORT_STR_LEN) {
+        printf("ERROR: Malformed port");
+        return NULL;
+    }
+
+    return port_str;
+}
 
 /**
  * @brief Creates and connects a socket.
  *
  * @param host - The host name e.g. www.canterbury.ac.nz
- * @param port - e.g. 80 or NULL, if no particular port is desired.
+ * @param port - e.g. 80
  * @return int - The connected socket.
  */
 int create_socket(char* host, int* port) {
     struct addrinfo hints;       // server address info
     struct addrinfo* res = NULL; // connector's address information
     int sockfd;
-    char port_str[20] = {0};
-    char* port_actual = NULL; // the port used by `getaddrinfo`
+    char* port_str = get_port_str(port);
 
-    if (port != NULL) {
-        int len = snprintf(port_str, 20, "%d", *port);
-        if (len < 0 || len >= 20) {
-            printf("ERROR: Malformed port");
-            return BAD_SOCKET;
-        }
+    if (port_str == NULL) {
+        return BAD_SOCKET;
+    }
         port_actual = port_str;
     }
 
@@ -43,8 +58,13 @@ int create_socket(char* host, int* port) {
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_INET;
     hints.ai_socktype = SOCK_STREAM;
-    if (getaddrinfo(host, port_actual, &hints, &res) != 0) {
-        freeaddrinfo(res);
+
+    int result = getaddrinfo(host, port_str, &hints, &res);
+
+    freeaddrinfo(res);
+    free(port_str);
+
+    if (result != 0) {
         printf("ERROR: getaddrinfo");
         return BAD_SOCKET;
     }
