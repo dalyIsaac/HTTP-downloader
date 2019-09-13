@@ -16,7 +16,7 @@
  * @brief Creates and connects a socket.
  *
  * @param host - The host name e.g. www.canterbury.ac.nz
- * @param port - e.g. 80
+ * @param port - e.g. 80 or NULL, if no particular port is desired.
  * @return int - The connected socket.
  */
 int create_socket(char* host, int* port) {
@@ -24,11 +24,15 @@ int create_socket(char* host, int* port) {
     struct addrinfo* res = NULL; // connector's address information
     int sockfd;
     char port_str[20] = {0};
+    char* port_actual = NULL; // the port used by `getaddrinfo`
 
-    int n = snprintf(port_str, 20, "%d", *port);
-    if (n < 0 || n >= 20) {
-        printf("ERROR: Malformed port");
-        return BAD_SOCKET;
+    if (port != NULL) {
+        int len = snprintf(port_str, 20, "%d", *port);
+        if (len < 0 || len >= 20) {
+            printf("ERROR: Malformed port");
+            return BAD_SOCKET;
+        }
+        port_actual = port_str;
     }
 
     if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
@@ -39,8 +43,7 @@ int create_socket(char* host, int* port) {
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_INET;
     hints.ai_socktype = SOCK_STREAM;
-
-    if (getaddrinfo(host, port_str, &hints, &res) != 0) {
+    if (getaddrinfo(host, port_actual, &hints, &res) != 0) {
         freeaddrinfo(res);
         printf("ERROR: getaddrinfo");
         return BAD_SOCKET;
@@ -95,14 +98,14 @@ Buffer* read_socket(int sockfd) {
 }
 
 /**
- * @brief Creates the HTTP header.
+ * @brief Creates an HTTP GET header.
  *
  * @param host
  * @param page
  * @param range
  * @return char*
  */
-char* create_header(char* host, char* page, const char* range) {
+char* create_http_get(char* host, char* page, const char* range) {
     char* format = "GET /%s HTTP/1.0\r\n"
                    "Host: %s\r\n"
                    "Range: bytes=%s\r\n"
@@ -135,7 +138,7 @@ Buffer* http_query(char* host, char* page, const char* range, int port) {
         return NULL;
     }
 
-    char* header = create_header(host, page, range);
+    char* header = create_http_get(host, page, range);
 
     if (write(sockfd, header, strlen(header)) == -1) {
         printf("ERROR: send header");
