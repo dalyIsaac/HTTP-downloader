@@ -47,8 +47,6 @@ int create_socket(char* host, int* port) {
     if (port_str == NULL) {
         return BAD_SOCKET;
     }
-        port_actual = port_str;
-    }
 
     if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
         printf("ERROR: socket");
@@ -74,7 +72,6 @@ int create_socket(char* host, int* port) {
         return BAD_SOCKET;
     }
 
-    freeaddrinfo(res);
     return sockfd;
 }
 
@@ -217,6 +214,54 @@ Buffer* http_url(const char* url, const char* range) {
 }
 
 /**
+ * @brief Creates an HTTP head header.
+ *
+ * @param host
+ * @param page
+ * @return char*
+ */
+char* create_http_head(char* host, char* page) {
+    char* format = "GET /%s HTTP/1.0\r\n"
+                   "Host: %s\r\n"
+                   "User-Agent: getter\r\n\r\n";
+    size_t length = strlen(format) + strlen(host) + strlen(page);
+
+    char* header = malloc(sizeof(char) * length);
+    sprintf(header, format, page, host);
+    return header;
+}
+
+/**
+ * @brief Performs an HTTP head request.
+ *
+ * @param host
+ * @param page
+ * @param port
+ * @return Buffer*
+ */
+Buffer* http_head(char* host, char* page, int port) {
+    int sockfd = create_socket(host, &port);
+
+    if (sockfd == BAD_SOCKET) {
+        return NULL;
+    }
+
+    char* header = create_http_head(host, page);
+
+    if (write(sockfd, header, strlen(header)) == -1) {
+        printf("ERROR: send header");
+        return NULL;
+    }
+
+    Buffer* buffer = read_socket(sockfd);
+
+    free(header);
+    close(sockfd);
+
+    return buffer;
+}
+
+/**
  * Makes a HEAD request to a given URL and gets the content length
  * Then determines max_chunk_size and number of split downloads needed
  * @param url   The URL of the resource to download
@@ -225,7 +270,24 @@ Buffer* http_url(const char* url, const char* range) {
  *              to download the resource
  */
 int get_num_tasks(char* url, int threads) {
-    assert(0 && "not implemented yet!");
+    char host[BUF_SIZE];
+    strncpy(host, url, BUF_SIZE);
+    char* page = strstr(host, "/");
+
+    if (page) {
+        page[0] = '\0';
+        ++page;
+    } else {
+        return 0;
+    }
+
+    Buffer* buffer = http_head(host, page, 80);
+
+    if (buffer != NULL) {
+        printf("%s\n", buffer->data);
+    }
+
+    return 0;
 }
 
 int get_max_chunk_size() {

@@ -5,6 +5,25 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "downloader",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/downloader",
+      "args": ["small.txt", "12", "download"],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}",
+      "environment": [],
+      "externalConsole": false,
+      "MIMode": "gdb",
+      "setupCommands": [
+        {
+          "description": "Enable pretty-printing for gdb",
+          "text": "-enable-pretty-printing",
+          "ignoreFailures": true
+        }
+      ]
+    },
+    {
       "name": "queue_test",
       "type": "cppdbg",
       "request": "launch",

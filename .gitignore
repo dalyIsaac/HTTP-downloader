@@ -52,6 +52,7 @@ Mkfile.old
 dkms.conf
 
 # Built executable
+bin
 downloader
 http_download
 http_test
@@ -60,3 +61,4 @@ queue_test
 # Testing
 __output
 __template
+download
