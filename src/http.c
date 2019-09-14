@@ -346,6 +346,22 @@ void parse_head(Buffer* buffer, bool* accept_ranges, int* content_length) {
 }
 
 /**
+ * @brief Divides the numerator by the denominator, and returns the ceiling of
+ * the floating point value.
+ *
+ * @param num
+ * @param denom
+ * @return int
+ */
+int divide(int num, int denom) {
+    int result = (float) num / denom;
+    if (result * denom < num) {
+        result++;
+    }
+    return result;
+}
+
+/**
  * Makes a HEAD request to a given URL and gets the content length
  * Then determines max_chunk_size and number of split downloads needed
  * @param url   The URL of the resource to download
@@ -366,16 +382,23 @@ int get_num_tasks(char* url, int threads) {
     }
 
     Buffer* buffer = http_head(host, page, 80);
-
-    if (buffer != NULL) {
-        printf("%s\n", buffer->data); // TODO: REMOVE
-        bool accept_ranges;
-        int content_length;
-        parse_head(buffer, &accept_ranges, &content_length);
-        printf("HELLO WORLD\n");
+    if (buffer == NULL) {
+        return 0;
     }
 
-    return 0;
+    printf("%s\n", buffer->data); // TODO: REMOVE
+    bool accept_ranges;
+    int content_length;
+    parse_head(buffer, &accept_ranges, &content_length);
+
+    if (accept_ranges == false || content_length < BUF_SIZE) {
+        max_chunk_size = content_length;
+        return 1;
+    } else {
+        // TODO: investigate why 1025 bytes are being downloaded
+        max_chunk_size = BUF_SIZE;
+        return divide(content_length, BUF_SIZE);
+    }
 }
 
 int get_max_chunk_size() {
