@@ -232,6 +232,7 @@ void merge_files(char* src, char* dest, int bytes, int tasks) {
             fwrite(buffer, bytes_read, 1, dest_file);
         }
         fclose(src_file);
+        remove(filename);
     }
 
     free(buffer);
@@ -298,7 +299,6 @@ int main(int argc, char** argv) {
          * Beware, this is not an efficient method
          */
         merge_files(download_dir, line, bytes, num_tasks);
-        remove_chunk_files(download_dir, bytes, num_tasks);
     }
 
     // cleanup
