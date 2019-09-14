@@ -10,6 +10,7 @@
 
 #include "http.h"
 #include "queue.h"
+#include <libgen.h>
 
 #define FILE_SIZE 256
 
@@ -198,7 +199,42 @@ void wait_task(const char* download_dir, Context* context) {
  * @param tasks - The tasks needed for the multipart download
  */
 void merge_files(char* src, char* dest, int bytes, int tasks) {
-    assert(0 && "not implemented yet!");
+    create_directory(dest);
+
+    FILE* src_file;
+    FILE* dest_file = fopen(dest, "w");
+
+    if (dest_file == NULL) {
+        return;
+    }
+    char* buffer = malloc(bytes * sizeof(char));
+    int src_len = strlen(src) + 1;
+
+    for (int i = 0; i < tasks; i++) {
+        int file_num = bytes * i;
+        // Approximation of the required size to store `i`.
+        int file_num_len = snprintf(NULL, 0, "%d", file_num) + 1;
+        char filename[file_num_len + src_len];
+        sprintf(filename, "%s/%d", src, file_num);
+
+        src_file = fopen(filename, "r");
+        if (src_file == NULL) {
+            break;
+        }
+
+        memset(buffer, 0, bytes);
+
+        int bytes_read;
+        while ((bytes_read = fread(buffer, 1, bytes, src_file)) > 0) {
+            // Handles null bytes
+            bytes_read = bytes_read < bytes ? bytes_read - 1 : bytes;
+            fwrite(buffer, bytes_read, 1, dest_file);
+        }
+        fclose(src_file);
+    }
+
+    free(buffer);
+    fclose(dest_file);
 }
 
 /**

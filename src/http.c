@@ -403,6 +403,7 @@ int get_max_chunk_size() {
     return max_chunk_size;
 }
 
+// TODO: REMOVE
 /**
  * HTTP/1.1 200 OK
  * Last-Modified: Sat, 08 Nov 2014 07:52:49 GMT
