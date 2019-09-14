@@ -1,6 +1,8 @@
 #include <arpa/inet.h>
 #include <assert.h>
+#include <ctype.h>
 #include <netdb.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -12,6 +14,14 @@
 #define BUF_SIZE 1024
 #define BAD_SOCKET -1
 #define PORT_STR_LEN 20
+
+#define ACCEPT_RANGES "accept-ranges:"
+#define BYTES "bytes"
+
+#define CONTENT_LENGTH "content-length:"
+
+#define NEWLINE "\r\n"
+#define HEADER_END "\r\n\r\n"
 
 /**
  * @brief Get the port as a string.
@@ -262,6 +272,80 @@ Buffer* http_head(char* host, char* page, int port) {
 }
 
 /**
+ * @brief Returns a pointer to the character after whitespace.
+ *
+ * @param location The character to start the search from.
+ * @param buffer The `buffer`, of which `location` resides inside.
+ * @return char* The pointer to the character after whitespace.
+ */
+char* consume_whitespace(char* location, Buffer* buffer) {
+    char* end = buffer->data + buffer->length;
+    while (*location == ' ' && location <= end) {
+        location++;
+    }
+    return location;
+}
+
+/**
+ * @brief Returns a Boolean indicating if the HTTP header has an Accept-Ranges
+ * value of "bytes".
+ *
+ * @param buffer The buffer containing the HTTP header.
+ * @return true The HTTP header has an "Accept-Ranges" header with a value of
+ * "bytes".
+ * @return false The HTTP header does not have an "Accept-Ranges" header with a
+ * value of "bytes".
+ */
+bool get_accept_ranges(Buffer* buffer) {
+    char* accept_header = strstr(buffer->data, ACCEPT_RANGES);
+    if (accept_header == NULL) {
+        return false;
+    }
+
+    char* value_start = accept_header + strlen(ACCEPT_RANGES);
+    value_start = consume_whitespace(value_start, buffer);
+
+    char* accept_value = strstr(value_start, BYTES);
+    // If there is a substring matching BYTES, than it should be at the location
+    // `accept_header`.
+    return value_start == accept_value;
+}
+
+/**
+ * @brief Gets the Content-Length value from the HTTP header.
+ *
+ * @param bufferThe buffer containing the HTTP header.
+ * @return int The value for the Content-Length header. 0 if the header does not
+ * exist.
+ */
+int get_content_length(Buffer* buffer) {
+    char* length_header = strstr(buffer->data, CONTENT_LENGTH);
+    if (length_header == NULL) {
+        return 0;
+    }
+
+    char* length_start = length_header + strlen(CONTENT_LENGTH);
+    return atoi(length_start);
+}
+
+/**
+ * @brief Parses the header for Accept-Ranges and Content-Length headers.
+ *
+ * @param buffer
+ * @param accept_ranges
+ * @param content_length
+ */
+void parse_head(Buffer* buffer, bool* accept_ranges, int* content_length) {
+    // Converts the buffer to a lower case.
+    for (size_t i = 0; i < buffer->length; i++) {
+        buffer->data[i] = tolower(buffer->data[i]);
+    }
+
+    *accept_ranges = get_accept_ranges(buffer);
+    *content_length = get_content_length(buffer);
+}
+
+/**
  * Makes a HEAD request to a given URL and gets the content length
  * Then determines max_chunk_size and number of split downloads needed
  * @param url   The URL of the resource to download
@@ -284,7 +368,11 @@ int get_num_tasks(char* url, int threads) {
     Buffer* buffer = http_head(host, page, 80);
 
     if (buffer != NULL) {
-        printf("%s\n", buffer->data);
+        printf("%s\n", buffer->data); // TODO: REMOVE
+        bool accept_ranges;
+        int content_length;
+        parse_head(buffer, &accept_ranges, &content_length);
+        printf("HELLO WORLD\n");
     }
 
     return 0;
@@ -293,3 +381,23 @@ int get_num_tasks(char* url, int threads) {
 int get_max_chunk_size() {
     return max_chunk_size;
 }
+
+/**
+ * HTTP/1.1 200 OK
+ * Last-Modified: Sat, 08 Nov 2014 07:52:49 GMT
+ * ETag: "9e40ce52214108da46b2b9d43431c374"
+ * Content-Type: image/jpeg
+ * cache-control: public, max-age=31536000
+ * Content-Length: 49449
+ * Accept-Ranges: bytes
+ * Date: Fri, 13 Sep 2019 09:51:28 GMT
+ * Age: 1338959
+ * Connection: close
+ * X-Served-By: cache-bwi5149-BWI, cache-akl1422-AKL
+ * X-Cache: HIT, HIT
+ * X-Cache-Hits: 1, 1
+ * X-Timer: S1568368289.808164,VS0,VE3
+ * Access-Control-Allow-Methods: GET, OPTIONS
+ * Access-Control-Allow-Origin: *
+ * Server: cat factory 1.0
+ */
