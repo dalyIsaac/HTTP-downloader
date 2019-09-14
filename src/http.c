@@ -386,7 +386,6 @@ int get_num_tasks(char* url, int threads) {
         return 0;
     }
 
-    printf("%s\n", buffer->data); // TODO: REMOVE
     bool accept_ranges;
     int content_length;
     parse_head(buffer, &accept_ranges, &content_length);
@@ -395,7 +394,6 @@ int get_num_tasks(char* url, int threads) {
         max_chunk_size = content_length;
         return 1;
     } else {
-        // TODO: investigate why 1025 bytes are being downloaded
         max_chunk_size = BUF_SIZE;
         return divide(content_length, BUF_SIZE);
     }
