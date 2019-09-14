@@ -207,14 +207,15 @@ void merge_files(char* src, char* dest, int bytes, int tasks) {
     if (dest_file == NULL) {
         return;
     }
+
     char* buffer = malloc(bytes * sizeof(char));
     int src_len = strlen(src) + 1;
+    int max_bytes_len = snprintf(NULL, 0, "%d", bytes * tasks) + 1;
+    char filename[src_len + max_bytes_len];
 
     for (int i = 0; i < tasks; i++) {
+        // Gets the source filename.
         int file_num = bytes * i;
-        // Approximation of the required size to store `i`.
-        int file_num_len = snprintf(NULL, 0, "%d", file_num) + 1;
-        char filename[file_num_len + src_len];
         sprintf(filename, "%s/%d", src, file_num);
 
         src_file = fopen(filename, "r");
