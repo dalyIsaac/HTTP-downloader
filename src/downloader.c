@@ -29,7 +29,26 @@ typedef struct {
 
 } Context;
 
-void create_directory(const char* dir) {
+/**
+ * @brief Parses the given destination for a directory, and creates it.
+ *
+ * @param dest
+ */
+void create_directory(const char* dest) {
+    char* dir;
+
+    if (strchr(dest, '/') != NULL) {
+        // Copies the destination
+        int len = strlen(dest) + 1;
+        char path[len];
+        snprintf(path, len, "%s", dest);
+
+        // Gets the directory name
+        dir = dirname(path);
+    } else {
+        dir = (char*) dest;
+    }
+
     struct stat st = {0};
 
     if (stat(dir, &st) == -1) {
