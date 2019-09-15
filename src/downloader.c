@@ -30,26 +30,7 @@ typedef struct {
 
 } Context;
 
-/**
- * @brief Parses the given destination for a directory, and creates it.
- *
- * @param dest
- */
-void create_directory(const char* dest) {
-    char* dir;
-
-    if (strchr(dest, '/') != NULL) {
-        // Copies the destination
-        int len = strlen(dest) + 1;
-        char path[len];
-        snprintf(path, len, "%s", dest);
-
-        // Gets the directory name
-        dir = dirname(path);
-    } else {
-        dir = (char*) dest;
-    }
-
+void create_directory(const char* dir) {
     struct stat st = {0};
 
     if (stat(dir, &st) == -1) {
@@ -199,10 +180,13 @@ void wait_task(const char* download_dir, Context* context) {
  * @param tasks - The tasks needed for the multipart download
  */
 void merge_files(char* src, char* dest, int bytes, int tasks) {
-    create_directory(dest);
+    char* dest_base = basename(dest);
+    int dest_len = strlen(src) + strlen(dest_base) + 2;
+    char dest_filename[dest_len];
+    snprintf(dest_filename, dest_len, "%s/%s", src, dest_base);
 
     FILE* src_file;
-    FILE* dest_file = fopen(dest, "w");
+    FILE* dest_file = fopen(dest_filename, "w");
 
     if (dest_file == NULL) {
         return;
@@ -211,14 +195,14 @@ void merge_files(char* src, char* dest, int bytes, int tasks) {
     char* buffer = malloc(bytes * sizeof(char));
     int src_len = strlen(src) + 1;
     int max_bytes_len = snprintf(NULL, 0, "%d", bytes * tasks) + 1;
-    char filename[src_len + max_bytes_len];
+    char src_filename[src_len + max_bytes_len];
 
     for (int i = 0; i < tasks; i++) {
-        // Gets the source filename.
+        // Gets the source src_filename.
         int file_num = bytes * i;
-        sprintf(filename, "%s/%d", src, file_num);
+        sprintf(src_filename, "%s/%d", src, file_num);
 
-        src_file = fopen(filename, "r");
+        src_file = fopen(src_filename, "r");
         if (src_file == NULL) {
             break;
         }
@@ -232,7 +216,7 @@ void merge_files(char* src, char* dest, int bytes, int tasks) {
             fwrite(buffer, bytes_read, 1, dest_file);
         }
         fclose(src_file);
-        remove(filename);
+        remove(src_filename);
     }
 
     free(buffer);
