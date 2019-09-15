@@ -347,7 +347,7 @@ void parse_head(Buffer* buffer, bool* accept_ranges, int* content_length) {
 
 /**
  * @brief Divides the numerator by the denominator, and returns the ceiling of
- * the floating point value.
+ * the floating point value as an integer.
  *
  * @param num
  * @param denom
@@ -394,32 +394,11 @@ int get_num_tasks(char* url, int threads) {
         max_chunk_size = content_length;
         return 1;
     } else {
-        max_chunk_size = BUF_SIZE;
-        return divide(content_length, BUF_SIZE);
+        max_chunk_size = divide(content_length, threads);
+        return threads;
     }
 }
 
 int get_max_chunk_size() {
     return max_chunk_size;
 }
-
-// TODO: REMOVE
-/**
- * HTTP/1.1 200 OK
- * Last-Modified: Sat, 08 Nov 2014 07:52:49 GMT
- * ETag: "9e40ce52214108da46b2b9d43431c374"
- * Content-Type: image/jpeg
- * cache-control: public, max-age=31536000
- * Content-Length: 49449
- * Accept-Ranges: bytes
- * Date: Fri, 13 Sep 2019 09:51:28 GMT
- * Age: 1338959
- * Connection: close
- * X-Served-By: cache-bwi5149-BWI, cache-akl1422-AKL
- * X-Cache: HIT, HIT
- * X-Cache-Hits: 1, 1
- * X-Timer: S1568368289.808164,VS0,VE3
- * Access-Control-Allow-Methods: GET, OPTIONS
- * Access-Control-Allow-Origin: *
- * Server: cat factory 1.0
- */
