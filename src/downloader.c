@@ -239,16 +239,6 @@ void merge_files(char* src, char* dest, int bytes, int tasks) {
     fclose(dest_file);
 }
 
-/**
- * Remove files caused by chunk downloading
- * @param dir - The directory holding the chunked files
- * @param bytes - The maximum byte size per file. Assumed to be filename
- * @param files - The number of chunked files to remove.
- */
-void remove_chunk_files(char* dir, int bytes, int files) {
-    assert(0 && "not implemented yet!");
-}
-
 int main(int argc, char** argv) {
     if (argc != 4) {
         fprintf(stderr,
