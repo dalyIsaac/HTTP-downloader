@@ -172,6 +172,28 @@ void wait_task(const char* download_dir, Context* context) {
 }
 
 /**
+ * @brief Writes the source file to the destination file.
+ *
+ * @param src The source file.
+ * @param dest The destination file.
+ * @param buffer The buffer to store the contents of the read file.
+ * @param bytes The maximum byte size downloaded.
+ * @param currentTask The current task number.
+ * @param tasks The total number of tasks.
+ */
+void write_to_dest(FILE* src, FILE* dest, char* buffer, int bytes,
+                   int currentTask, int tasks) {
+    int bytes_read;
+    while ((bytes_read = fread(buffer, 1, bytes, src)) > 0) {
+        // Handles null bytes
+        if (bytes_read < bytes && currentTask != tasks - 1) {
+            bytes_read--;
+        }
+        fwrite(buffer, bytes_read, 1, dest);
+    }
+}
+
+/**
  * Merge all files in from src to file with name dest synchronously
  * by reading each file, and writing its contents to the dest file.
  * @param src - char pointer to src directory holding files to merge
@@ -180,6 +202,7 @@ void wait_task(const char* download_dir, Context* context) {
  * @param tasks - The tasks needed for the multipart download
  */
 void merge_files(char* src, char* dest, int bytes, int tasks) {
+    // Gets the destination filename
     char* dest_base = basename(dest);
     int dest_len = strlen(src) + strlen(dest_base) + 2;
     char dest_filename[dest_len];
@@ -194,6 +217,7 @@ void merge_files(char* src, char* dest, int bytes, int tasks) {
 
     char* buffer = malloc(bytes * sizeof(char));
     int src_len = strlen(src) + 1;
+    // The amount of bytes required to represent the largest task number.
     int max_bytes_len = snprintf(NULL, 0, "%d", bytes * tasks) + 1;
     char src_filename[src_len + max_bytes_len];
 
@@ -207,14 +231,7 @@ void merge_files(char* src, char* dest, int bytes, int tasks) {
             break;
         }
 
-        memset(buffer, 0, bytes);
-
-        int bytes_read;
-        while ((bytes_read = fread(buffer, 1, bytes, src_file)) > 0) {
-            // Handles null bytes
-            bytes_read = bytes_read < bytes ? bytes_read - 1 : bytes;
-            fwrite(buffer, bytes_read, 1, dest_file);
-        }
+        write_to_dest(src_file, dest_file, buffer, bytes, i, tasks);
         fclose(src_file);
         remove(src_filename);
     }

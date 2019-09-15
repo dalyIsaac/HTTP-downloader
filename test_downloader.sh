@@ -4,6 +4,19 @@ declare -a names=("small" "large")
 
 for i in "${names[@]}"
 do
+    if [ -d "$i" ]
+    then
+        rm -Rf "$i"
+    fi
+
+    if [ -d "$i"-custom ]
+    then
+        rm -Rf "$i"-custom
+    fi
+done
+
+for i in "${names[@]}"
+do
     if [ -d download ]
     then 
         rm -Rf download
@@ -25,7 +38,7 @@ do
     else
         echo Differences for "$i":
         echo "$differences"
-        mv download "$i"-curl
+        mv download "$i"-custom
     fi
 
     printf "\n\n\n\n"
