@@ -20,9 +20,6 @@
 
 #define CONTENT_LENGTH "content-length:"
 
-#define NEWLINE "\r\n"
-#define HEADER_END "\r\n\r\n"
-
 /**
  * @brief Get the port as a string.
  *
@@ -44,9 +41,9 @@ char* get_port_str(int* port) {
 /**
  * @brief Creates and connects a socket.
  *
- * @param host - The host name e.g. www.canterbury.ac.nz
- * @param port - e.g. 80
- * @return int - The connected socket.
+ * @param host The host name e.g. www.canterbury.ac.nz
+ * @param port e.g. 80
+ * @return int The connected socket.
  */
 int create_socket(char* host, int* port) {
     struct addrinfo hints;       // server address info
@@ -118,28 +115,28 @@ void free_buffer(Buffer* buffer) {
  * @return Buffer* - The socket's contents.
  */
 Buffer* read_socket(int sockfd) {
-    int currentSize = BUF_SIZE;
-    int bytesRead = 0;
+    int current_size = BUF_SIZE;
+    int bytes_read = 0;
 
-    Buffer* buffer = create_buffer(currentSize);
+    Buffer* buffer = create_buffer(current_size);
 
-    if ((bytesRead = read(sockfd, buffer->data, BUF_SIZE)) <= 0) {
+    if ((bytes_read = read(sockfd, buffer->data, BUF_SIZE)) <= 0) {
         printf("ERROR: reading from socket");
         free_buffer(buffer);
         return NULL;
     }
-    buffer->length += bytesRead;
+    buffer->length += bytes_read;
 
-    char newData[BUF_SIZE] = {0};
+    char new_data[BUF_SIZE] = {0};
 
-    while ((bytesRead = read(sockfd, newData, BUF_SIZE)) > 0) {
-        if (buffer->length + bytesRead >= currentSize) {
-            currentSize += BUF_SIZE;
-            buffer->data = realloc(buffer->data, currentSize);
+    while ((bytes_read = read(sockfd, new_data, BUF_SIZE)) > 0) {
+        if (buffer->length + bytes_read >= current_size) {
+            current_size += BUF_SIZE;
+            buffer->data = realloc(buffer->data, current_size);
         }
 
-        memcpy(&buffer->data[buffer->length], &newData, bytesRead);
-        buffer->length += bytesRead;
+        memcpy(&buffer->data[buffer->length], &new_data, bytes_read);
+        buffer->length += bytes_read;
     }
 
     return buffer;
@@ -162,7 +159,7 @@ char* create_http_get(char* host, char* page, const char* range) {
         strlen(format) + strlen(host) + strlen(page) + strlen(range);
 
     char* header = malloc(sizeof(char) * length);
-    sprintf(header, format, page, host, range);
+    snprintf(header, length, format, page, host, range);
     return header;
 }
 
@@ -172,11 +169,11 @@ char* create_http_get(char* host, char* page, const char* range) {
  * will attempt to retrieve content in the given byte range.
  * User is responsible for freeing the memory.
  *
- * @param host - The host name e.g. www.canterbury.ac.nz
- * @param page - e.g. /index.html
- * @param range - Byte range e.g. 0-500. NOTE: A server may not respect this
- * @param port - e.g. 80
- * @return Buffer - Pointer to a buffer holding response data from query
+ * @param host The host name e.g. www.canterbury.ac.nz
+ * @param page e.g. /index.html
+ * @param range Byte range e.g. 0-500. NOTE: A server may not respect this
+ * @param port e.g. 80
+ * @return Buffer Pointer to a buffer holding response data from query
  *                  NULL is returned on failure.
  */
 Buffer* http_query(char* host, char* page, const char* range, int port) {
@@ -258,7 +255,7 @@ char* create_http_head(char* host, char* page) {
     size_t length = strlen(format) + strlen(host) + strlen(page);
 
     char* header = malloc(sizeof(char) * length);
-    sprintf(header, format, page, host);
+    snprintf(header, length, format, page, host);
     return header;
 }
 
@@ -324,8 +321,8 @@ bool get_accept_ranges(Buffer* buffer) {
         return false;
     }
 
-    char* value_start = accept_header + strlen(ACCEPT_RANGES);
-    value_start = consume_whitespace(value_start, buffer);
+    char* value_start =
+        consume_whitespace(accept_header + strlen(ACCEPT_RANGES), buffer);
 
     char* accept_value = strstr(value_start, BYTES);
     // If there is a substring matching BYTES, than it should be at the location
@@ -346,8 +343,7 @@ int get_content_length(Buffer* buffer) {
         return 0;
     }
 
-    char* length_start = length_header + strlen(CONTENT_LENGTH);
-    return atoi(length_start);
+    return atoi(length_header + strlen(CONTENT_LENGTH));
 }
 
 /**
@@ -375,7 +371,7 @@ void parse_head(Buffer* buffer, bool* accept_ranges, int* content_length) {
  * @param denom
  * @return int
  */
-int divide(int num, int denom) {
+int divide_ceil(int num, int denom) {
     int result = (float) num / denom;
     if (result * denom < num) {
         result++;
@@ -417,7 +413,7 @@ int get_num_tasks(char* url, int threads) {
         max_chunk_size = content_length;
         return 1;
     } else {
-        max_chunk_size = divide(content_length, threads);
+        max_chunk_size = divide_ceil(content_length, threads);
         return threads;
     }
 }

@@ -174,66 +174,73 @@ void wait_task(const char* download_dir, Context* context) {
 /**
  * @brief Writes the source file to the destination file.
  *
- * @param src The source file.
- * @param dest The destination file.
+ * @param dest_file The destination file.
+ * @param src_name The name of the source file.
  * @param buffer The buffer to store the contents of the read file.
  * @param bytes The maximum byte size downloaded.
  * @param currentTask The current task number.
  * @param tasks The total number of tasks.
+ * @return int 0 for no error, -1 for an error opening the file specified by
+ * src_name.
  */
-void write_to_dest(FILE* src, FILE* dest, char* buffer, int bytes,
-                   int currentTask, int tasks) {
+int write_to_dest(FILE* dest_file, char* src_name, char* buffer, int bytes,
+                  int currentTask, int tasks) {
+    FILE* src_file = fopen(src_name, "r");
+
+    if (src_file == NULL) {
+        return -1;
+    }
+
     int bytes_read;
-    while ((bytes_read = fread(buffer, 1, bytes, src)) > 0) {
+    while ((bytes_read = fread(buffer, 1, bytes, src_file)) > 0) {
         // Handles null bytes
         if (bytes_read < bytes && currentTask != tasks - 1) {
             bytes_read--;
         }
-        fwrite(buffer, bytes_read, 1, dest);
+        fwrite(buffer, bytes_read, 1, dest_file);
     }
+
+    fclose(src_file);
+    remove(src_name);
+    return 0;
 }
 
 /**
  * Merge all files in from src to file with name dest synchronously
  * by reading each file, and writing its contents to the dest file.
- * @param src - char pointer to src directory holding files to merge
- * @param dest - char pointer to name of file resulting from merge
- * @param bytes - The maximum byte size downloaded
- * @param tasks - The tasks needed for the multipart download
+ * @param src_dir - char pointer to src directory holding files to merge.
+ * @param file_url - char pointer to the name of the file's url.
+ * @param bytes - The maximum byte size downloaded.
+ * @param tasks - The tasks needed for the multipart download.
  */
-void merge_files(char* src, char* dest, int bytes, int tasks) {
+void merge_files(char* src_dir, char* file_url, int bytes, int tasks) {
     // Gets the destination filename
-    char* dest_base = basename(dest);
-    int dest_len = strlen(src) + strlen(dest_base) + 2;
-    char dest_filename[dest_len];
-    snprintf(dest_filename, dest_len, "%s/%s", src, dest_base);
+    char* dest_base = basename(file_url);
+    int dest_name_len = strlen(src_dir) + strlen(dest_base) + 2;
+    char dest_name[dest_name_len];
+    snprintf(dest_name, dest_name_len, "%s/%s", src_dir, dest_base);
 
-    FILE* src_file;
-    FILE* dest_file = fopen(dest_filename, "w");
+    FILE* dest_file = fopen(dest_name, "w");
 
     if (dest_file == NULL) {
         return;
     }
 
+    // The maximum amount of bytes required to represent the largest task
+    // number.
+    int max_bytes_len = snprintf(NULL, 0, "%d", bytes * tasks);
+    int src_name_len = strlen(src_dir) + 2 + max_bytes_len;
+    char src_filename[src_name_len + max_bytes_len];
+
     char* buffer = malloc(bytes * sizeof(char));
-    int src_len = strlen(src) + 1;
-    // The amount of bytes required to represent the largest task number.
-    int max_bytes_len = snprintf(NULL, 0, "%d", bytes * tasks) + 1;
-    char src_filename[src_len + max_bytes_len];
-
     for (int i = 0; i < tasks; i++) {
-        // Gets the source src_filename.
-        int file_num = bytes * i;
-        sprintf(src_filename, "%s/%d", src, file_num);
+        int src_file_num = bytes * i;
+        snprintf(src_filename, src_name_len, "%s/%d", src_dir, src_file_num);
 
-        src_file = fopen(src_filename, "r");
-        if (src_file == NULL) {
+        if (write_to_dest(dest_file, src_filename, buffer, bytes, i, tasks) !=
+            0) {
             break;
-        }
-
-        write_to_dest(src_file, dest_file, buffer, bytes, i, tasks);
-        fclose(src_file);
-        remove(src_filename);
+        };
     }
 
     free(buffer);
