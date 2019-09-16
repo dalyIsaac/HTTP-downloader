@@ -55,6 +55,7 @@ int create_socket(char* host, int* port) {
     char* port_str = get_port_str(port);
 
     if (port_str == NULL) {
+        free(port_str);
         return BAD_SOCKET;
     }
 
@@ -86,6 +87,29 @@ int create_socket(char* host, int* port) {
 }
 
 /**
+ * @brief Creates a buffer object
+ *
+ * @param size The size of the data.
+ * @return Buffer*
+ */
+Buffer* create_buffer(int size) {
+    Buffer* buffer = malloc(sizeof(Buffer));
+    buffer->data = malloc(size * sizeof(char));
+    buffer->length = 0;
+    return buffer;
+}
+
+/**
+ * @brief Frees a buffer object
+ *
+ * @param buffer
+ */
+void free_buffer(Buffer* buffer) {
+    free(buffer->data);
+    free(buffer);
+}
+
+/**
  * @brief Reads the socket until it is empty, and returns a buffer of the
  * socket's contents.
  * NOTE: It is required that the returned buffer is freed.
@@ -97,14 +121,11 @@ Buffer* read_socket(int sockfd) {
     int currentSize = BUF_SIZE;
     int bytesRead = 0;
 
-    Buffer* buffer = malloc(sizeof(Buffer));
-    buffer->data = malloc(currentSize * sizeof(char));
-    buffer->length = 0;
+    Buffer* buffer = create_buffer(currentSize);
 
     if ((bytesRead = read(sockfd, buffer->data, BUF_SIZE)) <= 0) {
         printf("ERROR: reading from socket");
-        free(buffer->data);
-        free(buffer);
+        free_buffer(buffer);
         return NULL;
     }
     buffer->length += bytesRead;
@@ -261,6 +282,7 @@ Buffer* http_head(char* host, char* page, int port) {
     if (write(sockfd, header, strlen(header)) == -1) {
         printf("ERROR: send header");
         free(header);
+        close(sockfd);
         return NULL;
     }
 
@@ -268,7 +290,6 @@ Buffer* http_head(char* host, char* page, int port) {
 
     free(header);
     close(sockfd);
-
     return buffer;
 }
 
@@ -390,8 +411,7 @@ int get_num_tasks(char* url, int threads) {
     bool accept_ranges;
     int content_length;
     parse_head(buffer, &accept_ranges, &content_length);
-    free(buffer->data);
-    free(buffer);
+    free_buffer(buffer);
 
     if (accept_ranges == false || content_length < BUF_SIZE) {
         max_chunk_size = content_length;
