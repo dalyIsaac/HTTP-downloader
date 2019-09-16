@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Used for testing ./downloader (and by extension, the source code of 
+# downloader.c, http.c, and queue.c).
+
 declare -a names=("small" "large")
 
 for i in "${names[@]}"
