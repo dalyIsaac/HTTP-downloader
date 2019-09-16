@@ -88,6 +88,7 @@ int create_socket(char* host, int* port) {
 /**
  * @brief Reads the socket until it is empty, and returns a buffer of the
  * socket's contents.
+ * NOTE: It is required that the returned buffer is freed.
  *
  * @param sockfd - The socket to read from.
  * @return Buffer* - The socket's contents.
@@ -97,7 +98,7 @@ Buffer* read_socket(int sockfd) {
     int bytesRead = 0;
 
     Buffer* buffer = malloc(sizeof(Buffer));
-    buffer->data = calloc(currentSize, sizeof(char));
+    buffer->data = malloc(currentSize * sizeof(char));
     buffer->length = 0;
 
     if ((bytesRead = read(sockfd, buffer->data, BUF_SIZE)) <= 0) {
@@ -118,7 +119,6 @@ Buffer* read_socket(int sockfd) {
 
         memcpy(&buffer->data[buffer->length], &newData, bytesRead);
         buffer->length += bytesRead;
-        memset(&newData, 0, bytesRead);
     }
 
     return buffer;
@@ -260,6 +260,7 @@ Buffer* http_head(char* host, char* page, int port) {
 
     if (write(sockfd, header, strlen(header)) == -1) {
         printf("ERROR: send header");
+        free(header);
         return NULL;
     }
 
@@ -389,6 +390,8 @@ int get_num_tasks(char* url, int threads) {
     bool accept_ranges;
     int content_length;
     parse_head(buffer, &accept_ranges, &content_length);
+    free(buffer->data);
+    free(buffer);
 
     if (accept_ranges == false || content_length < BUF_SIZE) {
         max_chunk_size = content_length;
