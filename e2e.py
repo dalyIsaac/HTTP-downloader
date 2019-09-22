@@ -7,6 +7,9 @@ import sys
 from urllib.request import Request, urlopen
 
 HEADERS = {"User-Agent": "getter"}
+USAGE = "Usage: python3 e2e.py THREADS [small] [large]"
+
+VALID_NAMES = {"small", "large"}
 
 
 def create_dir(dirname: str):
@@ -37,11 +40,19 @@ def run_downloader(filename: str, legit_dirname: str, custom_dirname: str, threa
 
 
 def main():
+    if len(sys.argv) <= 2:
+        print(USAGE)
+        return
+
     threads = sys.argv[1]
     files = sys.argv[2:]
 
     try:
         for name in files:
+            if name not in VALID_NAMES:
+                print(USAGE)
+                return
+
             legit_dirname = "legit_" + name
             custom_dirname = "custom_" + name
             filename = name + ".txt"
@@ -49,7 +60,7 @@ def main():
             run_downloader(filename, legit_dirname, custom_dirname, threads)
     except Exception as ex:
         print(ex)
-        print("Usage: python3 e2e.py THREADS [small] [large]")
+        print(USAGE)
 
 
 if __name__ == "__main__":
