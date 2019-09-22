@@ -206,6 +206,22 @@ int write_to_dest(FILE* dest_file, char* src_name, char* buffer, int bytes,
 }
 
 /**
+ * @brief Replaces all instances of old_char in a string with new_char. This
+ * relies on the string being null terminated.
+ *
+ * @param str
+ * @param old_char
+ * @param new_char
+ */
+void replace_char(char* str, char old_char, char new_char) {
+    for (size_t i = 0; i < strlen(str); i++) {
+        if (str[i] == old_char) {
+            str[i] = new_char;
+        }
+    }
+}
+
+/**
  * Merge all files in from src to file with name dest synchronously
  * by reading each file, and writing its contents to the dest file.
  * @param src_dir - char pointer to src directory holding files to merge.
@@ -214,11 +230,11 @@ int write_to_dest(FILE* dest_file, char* src_name, char* buffer, int bytes,
  * @param tasks - The tasks needed for the multipart download.
  */
 void merge_files(char* src_dir, char* file_url, int bytes, int tasks) {
-    // Gets the destination filename
-    char* dest_base = basename(file_url);
-    int dest_name_len = strlen(src_dir) + strlen(dest_base) + 2;
+    int dest_name_len = strlen(src_dir) + 1 + strlen(file_url) + 1;
     char dest_name[dest_name_len];
-    snprintf(dest_name, dest_name_len, "%s/%s", src_dir, dest_base);
+
+    replace_char(file_url, '/', '_');
+    snprintf(dest_name, dest_name_len, "%s/%s", src_dir, file_url);
 
     FILE* dest_file = fopen(dest_name, "w");
 

@@ -102,6 +102,14 @@
           "ignoreFailures": true
         }
       ]
+    },
+    {
+      "name": "Debug e2e.py",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}/e2e.py",
+      "console": "integratedTerminal",
+      "args": ["12", "small"]
     }
   ]
 }
