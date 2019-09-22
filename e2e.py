@@ -33,6 +33,7 @@ def run_downloader(filename: str, legit_dirname: str, custom_dirname: str, threa
         subprocess.call(
             ["/usr/bin/diff", custom_dirname, legit_dirname], stdout=diffs_file
         )
+        print("Look at diffs.txt for differences")
 
 
 def main():
