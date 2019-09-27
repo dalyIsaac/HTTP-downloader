@@ -115,28 +115,18 @@ void free_buffer(Buffer* buffer) {
  * @return Buffer* - The socket's contents.
  */
 Buffer* read_socket(int sockfd) {
-    int current_size = BUF_SIZE;
+    int allocated = BUF_SIZE;
     int bytes_read = 0;
 
-    Buffer* buffer = create_buffer(current_size);
+    Buffer* buffer = create_buffer(allocated);
 
-    if ((bytes_read = read(sockfd, buffer->data, BUF_SIZE)) <= 0) {
-        printf("ERROR: reading from socket");
-        free_buffer(buffer);
-        return NULL;
-    }
-    buffer->length += bytes_read;
-
-    char new_data[BUF_SIZE] = {0};
-
-    while ((bytes_read = read(sockfd, new_data, BUF_SIZE)) > 0) {
-        if (buffer->length + bytes_read >= current_size) {
-            current_size += BUF_SIZE;
-            buffer->data = realloc(buffer->data, current_size);
-        }
-
-        memcpy(&buffer->data[buffer->length], &new_data, bytes_read);
+    while ((bytes_read =
+                read(sockfd, &buffer->data[buffer->length], BUF_SIZE)) > 0) {
         buffer->length += bytes_read;
+        if (buffer->length + BUF_SIZE > allocated) {
+            allocated += BUF_SIZE;
+            buffer->data = realloc(buffer->data, allocated);
+        }
     }
 
     return buffer;

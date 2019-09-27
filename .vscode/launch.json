@@ -85,11 +85,7 @@
       "type": "cppdbg",
       "request": "launch",
       "program": "${workspaceFolder}/http_download",
-      "args": [
-        "github.com/dwyl/english-words/raw/master/words.txt",
-        // "example.com/url",
-        "__output"
-      ],
+      "args": ["i.imgur.com/xlLjV00.jpg", "__output"],
       "stopAtEntry": false,
       "cwd": "${workspaceFolder}",
       "environment": [],
