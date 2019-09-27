@@ -193,10 +193,6 @@ int write_to_dest(FILE* dest_file, char* src_name, char* buffer, int bytes,
 
     int bytes_read;
     while ((bytes_read = fread(buffer, 1, bytes, src_file)) > 0) {
-        // Handles null bytes
-        if (bytes_read < bytes && currentTask != tasks - 1) {
-            bytes_read--;
-        }
         fwrite(buffer, bytes_read, 1, dest_file);
     }
 
@@ -299,7 +295,7 @@ int main(int argc, char** argv) {
         for (int i = 0; i < num_tasks; i++) {
             ++work;
             queue_put(context->todo,
-                      new_task(line, i * bytes, (i + 1) * bytes));
+                      new_task(line, i * bytes, ((i + 1) * bytes) - 1));
         }
 
         // Get results back
