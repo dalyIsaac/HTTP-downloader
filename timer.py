@@ -17,6 +17,7 @@ def get_time(exe: str, file: str, threads: int):
 def average(exe: str, file: str, threads: int):
     times = []
     for i in range(5):
+        print(f"Iteration: {i + 1}", end="\n\n\n")
         times.append(get_time(exe, file, threads))
     times.sort()
     return statistics.mean(times[1:-1])
@@ -28,14 +29,18 @@ def print_results(results):
 
 
 def run(exe: str, file: str):
-    print(exe)
-    i = 1
+    threads = 1
     results = []
-    while i <= 64:
-        results.append((i, average(exe, file, i)))
-        i *= 2
-    print_results(results)
-    print("\n\n")
+    try:
+        while threads <= 64:
+            print(f"\n\n\nThreads: {threads}")
+            results.append((threads, average(exe, file, threads)))
+            threads *= 2
+    except Exception as ex:
+        print(f"Failed when threads = {threads}")
+        print(ex)
+    finally:
+        print_results(results)
 
 
 def main():
