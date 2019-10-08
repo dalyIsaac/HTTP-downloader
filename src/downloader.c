@@ -244,7 +244,7 @@ void merge_files(char* src_dir, char* file_url, int bytes, int tasks) {
     int src_name_len = strlen(src_dir) + 2 + max_bytes_len;
     char src_filename[src_name_len + max_bytes_len];
 
-    char* buffer = malloc(bytes * sizeof(char));
+    char buffer[bytes];
     for (int i = 0; i < tasks; i++) {
         int src_file_num = bytes * i;
         snprintf(src_filename, src_name_len, "%s/%d", src_dir, src_file_num);
@@ -255,7 +255,6 @@ void merge_files(char* src_dir, char* file_url, int bytes, int tasks) {
         };
     }
 
-    free(buffer);
     fclose(dest_file);
 }
 

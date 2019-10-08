@@ -21,24 +21,6 @@
 #define CONTENT_LENGTH "content-length:"
 
 /**
- * @brief Get the port as a string.
- *
- * @param port
- * @return char*
- */
-char* get_port_str(int* port) {
-    char* port_str = malloc(PORT_STR_LEN * sizeof(char));
-
-    int len = snprintf(port_str, PORT_STR_LEN, "%d", *port);
-    if (len < 0 || len >= PORT_STR_LEN) {
-        printf("ERROR: Malformed port\n");
-        return NULL;
-    }
-
-    return port_str;
-}
-
-/**
  * @brief Creates and connects a socket.
  *
  * @param host The host name e.g. www.canterbury.ac.nz
@@ -49,16 +31,15 @@ int create_socket(char* host, int* port) {
     struct addrinfo hints;       // server address info
     struct addrinfo* res = NULL; // connector's address information
     int sockfd;
-    char* port_str = get_port_str(port);
+    char port_str[PORT_STR_LEN];
 
-    if (port_str == NULL) {
-        free(port_str);
+    if (snprintf(port_str, PORT_STR_LEN, "%d", *port) <= 0) {
+        printf("ERROR: Malformed port\n");
         return BAD_SOCKET;
     }
 
     if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
         printf("ERROR: socket\n");
-        free(port_str);
         return BAD_SOCKET;
     }
 
@@ -69,7 +50,6 @@ int create_socket(char* host, int* port) {
     int result = getaddrinfo(host, port_str, &hints, &res);
 
     freeaddrinfo(res);
-    free(port_str);
 
     if (result != 0) {
         printf("ERROR: getaddrinfo\n");
@@ -134,27 +114,6 @@ Buffer* read_socket(int sockfd) {
 }
 
 /**
- * @brief Creates an HTTP GET header.
- *
- * @param host
- * @param page
- * @param range
- * @return char*
- */
-char* create_http_get(char* host, char* page, const char* range) {
-    char* format = "GET /%s HTTP/1.0\r\n"
-                   "Host: %s\r\n"
-                   "Range: bytes=%s\r\n"
-                   "User-Agent: getter\r\n\r\n";
-    size_t length =
-        strlen(format) + strlen(host) + strlen(page) + strlen(range);
-
-    char* header = malloc(sizeof(char) * length);
-    snprintf(header, length, format, page, host, range);
-    return header;
-}
-
-/**
  * Perform an HTTP 1.0 query to a given host and page and port number.
  * host is a hostname and page is a path on the remote server. The query
  * will attempt to retrieve content in the given byte range.
@@ -174,7 +133,14 @@ Buffer* http_query(char* host, char* page, const char* range, int port) {
         return NULL;
     }
 
-    char* header = create_http_get(host, page, range);
+    char* format = "GET /%s HTTP/1.0\r\n"
+                   "Host: %s\r\n"
+                   "Range: bytes=%s\r\n"
+                   "User-Agent: getter\r\n\r\n";
+    size_t length =
+        strlen(format) + strlen(host) + strlen(page) + strlen(range);
+    char header[length];
+    snprintf(header, length, format, page, host, range);
 
     if (write(sockfd, header, strlen(header)) == -1) {
         printf("ERROR: send header");
@@ -183,7 +149,6 @@ Buffer* http_query(char* host, char* page, const char* range, int port) {
 
     Buffer* buffer = read_socket(sockfd);
 
-    free(header);
     close(sockfd);
     return buffer;
 }
@@ -233,24 +198,6 @@ Buffer* http_url(const char* url, const char* range) {
 }
 
 /**
- * @brief Creates an HTTP head header.
- *
- * @param host
- * @param page
- * @return char*
- */
-char* create_http_head(char* host, char* page) {
-    char* format = "GET /%s HTTP/1.0\r\n"
-                   "Host: %s\r\n"
-                   "User-Agent: getter\r\n\r\n";
-    size_t length = strlen(format) + strlen(host) + strlen(page);
-
-    char* header = malloc(sizeof(char) * length);
-    snprintf(header, length, format, page, host);
-    return header;
-}
-
-/**
  * @brief Performs an HTTP head request.
  *
  * @param host
@@ -265,18 +212,21 @@ Buffer* http_head(char* host, char* page, int port) {
         return NULL;
     }
 
-    char* header = create_http_head(host, page);
+    char* format = "GET /%s HTTP/1.0\r\n"
+                   "Host: %s\r\n"
+                   "User-Agent: getter\r\n\r\n";
+    size_t length = strlen(format) + strlen(host) + strlen(page);
+    char header[length];
+    snprintf(header, length, format, page, host);
 
     if (write(sockfd, header, strlen(header)) == -1) {
         printf("ERROR: send header");
-        free(header);
         close(sockfd);
         return NULL;
     }
 
     Buffer* buffer = read_socket(sockfd);
 
-    free(header);
     close(sockfd);
     return buffer;
 }
