@@ -106,6 +106,14 @@
       "program": "${workspaceFolder}/e2e.py",
       "console": "integratedTerminal",
       "args": ["12", "small"]
+    },
+    {
+      "name": "Debug timer.py",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}/timer.py",
+      "console": "integratedTerminal",
+      "args": ["./downloader", "./small.txt"]
     }
   ]
 }
