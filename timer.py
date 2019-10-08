@@ -29,15 +29,16 @@ def print_results(results):
 
 
 def run(exe: str, file: str):
-    threads = 1
+    final = 1
     results = []
     try:
-        while threads <= 64:
+        for threads in [1, 2, 4, 8, 16, 24, 32, 40, 50]:
+            final = threads
             print(f"\n\n\nThreads: {threads}")
             results.append((threads, average(exe, file, threads)))
             threads *= 2
     except Exception as ex:
-        print(f"Failed when threads = {threads}")
+        print(f"Failed when threads = {final}")
         print(ex)
     finally:
         print_results(results)
