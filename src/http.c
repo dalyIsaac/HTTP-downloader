@@ -77,16 +77,6 @@ Buffer* create_buffer(int size) {
 }
 
 /**
- * @brief Frees a buffer object
- *
- * @param buffer
- */
-void free_buffer(Buffer* buffer) {
-    free(buffer->data);
-    free(buffer);
-}
-
-/**
  * @brief Reads the socket until it is empty, and returns a buffer of the
  * socket's contents.
  * NOTE: It is required that the returned buffer is freed.
@@ -347,7 +337,7 @@ int get_num_tasks(char* url, int threads) {
     bool accept_ranges;
     int content_length;
     parse_head(buffer, &accept_ranges, &content_length);
-    free_buffer(buffer);
+    buffer_free(buffer);
 
     if (accept_ranges == false || content_length < BUF_SIZE) {
         max_chunk_size = content_length;
