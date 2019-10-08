@@ -28,8 +28,8 @@
  * @return int The connected socket.
  */
 int create_socket(char* host, int* port) {
-    struct addrinfo hints;       // server address info
-    struct addrinfo* res = NULL; // connector's address information
+    struct addrinfo hints;               // server address info
+    struct addrinfo* server_addr = NULL; // connector's address information
     int sockfd;
     char port_str[PORT_STR_LEN];
 
@@ -47,20 +47,19 @@ int create_socket(char* host, int* port) {
     hints.ai_family = AF_INET;
     hints.ai_socktype = SOCK_STREAM;
 
-    int result = getaddrinfo(host, port_str, &hints, &res);
-
-    freeaddrinfo(res);
-
-    if (result != 0) {
+    if (getaddrinfo(host, port_str, &hints, &server_addr) != 0) {
         printf("ERROR: getaddrinfo\n");
+        freeaddrinfo(server_addr);
         return BAD_SOCKET;
     }
 
-    if (connect(sockfd, res->ai_addr, res->ai_addrlen) == -1) {
+    if (connect(sockfd, server_addr->ai_addr, server_addr->ai_addrlen) == -1) {
         printf("ERROR: connect\n");
+        freeaddrinfo(server_addr);
         return BAD_SOCKET;
     }
 
+    freeaddrinfo(server_addr);
     return sockfd;
 }
 
