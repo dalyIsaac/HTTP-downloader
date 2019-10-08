@@ -31,7 +31,7 @@ char* get_port_str(int* port) {
 
     int len = snprintf(port_str, PORT_STR_LEN, "%d", *port);
     if (len < 0 || len >= PORT_STR_LEN) {
-        printf("ERROR: Malformed port");
+        printf("ERROR: Malformed port\n");
         return NULL;
     }
 
@@ -57,7 +57,8 @@ int create_socket(char* host, int* port) {
     }
 
     if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
-        printf("ERROR: socket");
+        printf("ERROR: socket\n");
+        free(port_str);
         return BAD_SOCKET;
     }
 
@@ -71,12 +72,12 @@ int create_socket(char* host, int* port) {
     free(port_str);
 
     if (result != 0) {
-        printf("ERROR: getaddrinfo");
+        printf("ERROR: getaddrinfo\n");
         return BAD_SOCKET;
     }
 
     if (connect(sockfd, res->ai_addr, res->ai_addrlen) == -1) {
-        printf("ERROR: connect");
+        printf("ERROR: connect\n");
         return BAD_SOCKET;
     }
 
