@@ -27,13 +27,13 @@
  * @param port e.g. 80
  * @return int The connected socket.
  */
-int create_socket(char* host, int* port) {
+int create_socket(char* host, int port) {
     struct addrinfo hints;               // server address info
     struct addrinfo* server_addr = NULL; // connector's address information
     int sockfd;
     char port_str[PORT_STR_LEN];
 
-    if (snprintf(port_str, PORT_STR_LEN, "%d", *port) <= 0) {
+    if (snprintf(port_str, PORT_STR_LEN, "%d", port) <= 0) {
         printf("ERROR: Malformed port\n");
         return BAD_SOCKET;
     }
@@ -116,7 +116,7 @@ Buffer* read_socket(int sockfd) {
  *                  NULL is returned on failure.
  */
 Buffer* http_query(char* host, char* page, const char* range, int port) {
-    int sockfd = create_socket(host, &port);
+    int sockfd = create_socket(host, port);
 
     if (sockfd == BAD_SOCKET) {
         return NULL;
@@ -195,13 +195,13 @@ Buffer* http_url(const char* url, const char* range) {
  * @return Buffer*
  */
 Buffer* http_head(char* host, char* page, int port) {
-    int sockfd = create_socket(host, &port);
+    int sockfd = create_socket(host, port);
 
     if (sockfd == BAD_SOCKET) {
         return NULL;
     }
 
-    char* format = "GET /%s HTTP/1.0\r\n"
+    char* format = "HEAD /%s HTTP/1.0\r\n"
                    "Host: %s\r\n"
                    "User-Agent: getter\r\n\r\n";
     size_t length = strlen(format) + strlen(host) + strlen(page);
