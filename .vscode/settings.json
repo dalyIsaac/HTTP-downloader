@@ -2,7 +2,8 @@
     "editor.formatOnSave": true,
     "files.eol": "\n",
     "files.associations": {
-        "assert.h": "c"
+        "assert.h": "c",
+        "typeinfo": "c"
     },
     "python.testing.promptToConfigure": false,
     "python.testing.pytestEnabled": false,

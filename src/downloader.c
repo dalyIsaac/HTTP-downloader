@@ -226,7 +226,7 @@ void replace_char(char* str, char old_char, char new_char) {
  * @param tasks - The tasks needed for the multipart download.
  */
 void merge_files(char* src_dir, char* file_url, int bytes, int tasks) {
-    int dest_name_len = strlen(src_dir) + 1 + strlen(file_url) + 1;
+    int dest_name_len = strlen(src_dir) + strlen(file_url) + 2;
     char dest_name[dest_name_len];
 
     replace_char(file_url, '/', '_');
@@ -241,10 +241,10 @@ void merge_files(char* src_dir, char* file_url, int bytes, int tasks) {
     // The maximum amount of bytes required to represent the largest task
     // number.
     int max_bytes_len = snprintf(NULL, 0, "%d", bytes * tasks);
-    int src_name_len = strlen(src_dir) + 2 + max_bytes_len;
-    char src_filename[src_name_len + max_bytes_len];
+    int src_name_len = strlen(src_dir) + max_bytes_len + 2;
+    char src_filename[src_name_len];
 
-    char buffer[bytes];
+    char* buffer = malloc(bytes * sizeof(char));
     for (int i = 0; i < tasks; i++) {
         int src_file_num = bytes * i;
         snprintf(src_filename, src_name_len, "%s/%d", src_dir, src_file_num);
@@ -254,7 +254,7 @@ void merge_files(char* src_dir, char* file_url, int bytes, int tasks) {
             break;
         };
     }
-
+    free(buffer);
     fclose(dest_file);
 }
 
