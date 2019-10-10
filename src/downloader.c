@@ -177,7 +177,6 @@ void wait_task(const char* download_dir, Context* context) {
  * @param dest_file The destination file.
  * @param src_name The name of the source file.
  * @param buffer The buffer to store the contents of the read file.
- * @param bytes The maximum byte size downloaded.
  * @param currentTask The current task number.
  * @param tasks The total number of tasks.
  * @return int 0 for no error, -1 for an error opening the file specified by
@@ -192,7 +191,7 @@ int write_to_dest(FILE* dest_file, char* src_name, char* buffer, int bytes,
     }
 
     int bytes_read;
-    while ((bytes_read = fread(buffer, 1, bytes, src_file)) > 0) {
+    while ((bytes_read = fread(buffer, 1, BUFSIZ, src_file)) > 0) {
         fwrite(buffer, bytes_read, 1, dest_file);
     }
 
@@ -244,7 +243,7 @@ void merge_files(char* src_dir, char* file_url, int bytes, int tasks) {
     int src_name_len = strlen(src_dir) + max_bytes_len + 2;
     char src_filename[src_name_len];
 
-    char* buffer = malloc(bytes * sizeof(char));
+    char buffer[BUFSIZ];
     for (int i = 0; i < tasks; i++) {
         int src_file_num = bytes * i;
         snprintf(src_filename, src_name_len, "%s/%d", src_dir, src_file_num);
@@ -254,7 +253,6 @@ void merge_files(char* src_dir, char* file_url, int bytes, int tasks) {
             break;
         };
     }
-    free(buffer);
     fclose(dest_file);
 }
 
